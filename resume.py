@@ -142,6 +142,6 @@ st.markdown('</div>', unsafe_allow_html=True)
 # Footer with the Pulse animation you provided
 st.markdown(f"""
     <div class='footer-text'>
-        © 2026 | Built by <b>KANISH</b> | AI & ML Trainee @ App Innovation Technologies
+        © 2026 | Built by <b>KANISH</b> | AI & ML  
     </div>
 """, unsafe_allow_html=True)
