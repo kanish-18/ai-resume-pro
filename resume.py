@@ -100,7 +100,7 @@ st.markdown("""
 st.markdown('<div class="premium-card">', unsafe_allow_html=True)
 
 st.markdown('<p class="shiny-text">Smart CV ANALYZER</p>', unsafe_allow_html=True)
-st.markdown('<p style="text-align: center; color: rgba(255,255,255,0.5); letter-spacing: 3px; font-size: 0.7rem; margin-bottom: 40px;">AI-POWERED RESUME EXTRACTION ENGINE</p>', unsafe_allow_html=True)
+st.markdown('<p style="text-align: center; color: rgba(255,255,255,0.5); letter-spacing: 3px; font-size: 0.7rem; margin-bottom: 40px;">IMPROVE YOUR CHANCES BEFORE YOU APPLY JOB</p>', unsafe_allow_html=True)
 
 col1, col2 = st.columns(2, gap="large")
 
