@@ -140,4 +140,8 @@ if analyze_click:
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Footer with the Pulse animation you provided
-st.markdown('<div class="footer-text">Build by KANISH |  AI & ML </div>', unsafe_allow_html=True)
+st.markdown(f"""
+    <div class='footer-text'>
+        © 2026 | Built by <b>KANISH</b> | AI & ML Trainee @ App Innovation Technologies
+    </div>
+""", unsafe_allow_html=True)
