@@ -3,10 +3,9 @@ import PyPDF2
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# --- Page Config ---
-st.set_page_config(page_title="Elite Terminal v6.0", layout="wide")
 
-# --- INTEGRATED ULTRA MOTION CSS ---
+st.set_page_config(page_title="AI RESUME ANALYZER v6.0", layout="wide")
+
 st.markdown("""
     <style>
     /* Dynamic Mesh Gradient Background Animation */
@@ -96,11 +95,11 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- UI CONTENT ---
+
 
 st.markdown('<div class="premium-card">', unsafe_allow_html=True)
 
-st.markdown('<p class="shiny-text">ELITE TERMINAL</p>', unsafe_allow_html=True)
+st.markdown('<p class="shiny-text">Smart CV ANALYZER</p>', unsafe_allow_html=True)
 st.markdown('<p style="text-align: center; color: rgba(255,255,255,0.5); letter-spacing: 3px; font-size: 0.7rem; margin-bottom: 40px;">AI-POWERED RESUME EXTRACTION ENGINE</p>', unsafe_allow_html=True)
 
 col1, col2 = st.columns(2, gap="large")
@@ -139,7 +138,6 @@ if analyze_click:
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# Footer with the Pulse animation you provided
 st.markdown(f"""
     <div class='footer-text'>
         © 2026 | Built by <b>KANISH</b> | AI & ML  
