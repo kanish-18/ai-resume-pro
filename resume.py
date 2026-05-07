@@ -1,140 +1,138 @@
 import streamlit as st
 import PyPDF2
+import re
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-
 st.set_page_config(page_title="AI RESUME ANALYZER v6.0", layout="wide")
 
+# --- CUSTOM CSS (Kept your original + new styles) ---
 st.markdown("""
     <style>
-    /* Dynamic Mesh Gradient Background Animation */
     .stApp {
         background: linear-gradient(-45deg, #0f172a, #1e1b4b, #1e293b, #020617);
         background-size: 400% 400%;
         animation: gradient 15s ease infinite;
     }
-
     @keyframes gradient {
         0% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
     }
-
-    /* Ultra Glass Card with Motion */
     .premium-card {
         background: rgba(255, 255, 255, 0.03);
         backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 30px;
         padding: 40px;
-        margin-top: 50px;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        margin-top: 20px;
     }
-
-    .premium-card:hover {
-        transform: scale(1.01);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    /* Animated Header */
     .shiny-text {
         background: linear-gradient(to right, #60a5fa, #a78bfa, #f472b6);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        font-weight: 800;
-        font-size: 3em;
-        text-align: center;
-        letter-spacing: 10px;
-        margin-bottom: 5px;
+        font-weight: 800; font-size: 3em; text-align: center; letter-spacing: 10px;
     }
-
-    /* Button Motion */
+    .feature-box {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        padding: 20px;
+        border-left: 5px solid #a78bfa;
+        margin-bottom: 15px;
+    }
     .stButton>button {
         background: linear-gradient(90deg, #3b82f6, #8b5cf6) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 15px !important;
-        padding: 15px !important;
-        width: 100%;
-        font-weight: bold !important;
-        transition: all 0.3s ease !important;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    .stButton>button:hover {
-        box-shadow: 0 0 20px rgba(59, 130, 246, 0.6) !important;
-        transform: translateY(-2px) !important;
-    }
-
-    /* Footer Pulse */
-    .footer-text {
-        text-align: center;
-        color: rgba(255, 255, 255, 0.4);
-        font-size: 0.8em;
-        margin-top: 50px;
-        animation: pulse 3s infinite;
-    }
-
-    @keyframes pulse {
-        0% { opacity: 0.4; }
-        50% { opacity: 0.8; }
-        100% { opacity: 0.4; }
-    }
-
-    /* Input Styling */
-    .stTextArea textarea {
-        background: rgba(0, 0, 0, 0.2) !important;
-        color: white !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 15px !important;
+        color: white !important; border-radius: 15px !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
+# --- HELPER FUNCTIONS ---
+def extract_skills(text):
+    # Basic common skills list (In a real app, use a larger dataset or Spacy)
+    skills_db = ["Python", "Java", "React", "SQL", "Machine Learning", "Cloud", "Project Management", "UI/UX", "Docker", "Kubernetes", "C++", "Excel", "Data Analysis"]
+    found_skills = [skill for skill in skills_db if skill.lower() in text.lower()]
+    return set(found_skills)
 
+def get_job_recommendations(text):
+    # Simple logic to recommend roles based on keywords
+    text = text.lower()
+    if "python" in text or "machine learning" in text:
+        return ["Data Scientist", "AI Engineer", "Backend Developer"]
+    elif "react" in text or "ui" in text:
+        return ["Frontend Developer", "Product Designer", "Full Stack Engineer"]
+    else:
+        return ["General Consultant", "Project Coordinator", "Business Analyst"]
 
+# --- UI LAYOUT ---
 st.markdown('<div class="premium-card">', unsafe_allow_html=True)
-
 st.markdown('<p class="shiny-text">SMART CV ANALYZER</p>', unsafe_allow_html=True)
-st.markdown('<p style="text-align: center; color: rgba(255,255,255,0.5); letter-spacing: 3px; font-size: 0.7rem; margin-bottom: 40px;">IMPROVE YOUR CHANCES BEFORE YOU APPLY JOB</p>', unsafe_allow_html=True)
 
 col1, col2 = st.columns(2, gap="large")
 
 with col1:
-    st.markdown('<p style="color: #60a5fa; font-weight: bold; font-size: 0.8rem;">01. INPUT DATA</p>', unsafe_allow_html=True)
-    jd_text = st.text_area("JD", placeholder="Paste job requirements...", height=250, label_visibility="collapsed")
+    st.markdown('<p style="color: #60a5fa; font-weight: bold;">01. JOB DESCRIPTION</p>', unsafe_allow_html=True)
+    jd_text = st.text_area("JD", placeholder="Paste the job requirements here...", height=200, label_visibility="collapsed")
 
 with col2:
-    st.markdown('<p style="color: #a78bfa; font-weight: bold; font-size: 0.8rem;">02. UPLOAD ARTIFACT</p>', unsafe_allow_html=True)
+    st.markdown('<p style="color: #a78bfa; font-weight: bold;">02. UPLOAD RESUME</p>', unsafe_allow_html=True)
     resume_file = st.file_uploader("Resume", type="pdf", label_visibility="collapsed")
-    
-    st.write("<br>"*3, unsafe_allow_html=True)
-    analyze_click = st.button("Execute Analysis")
+    analyze_click = st.button("Analyze Profile")
 
 if analyze_click:
     if resume_file and jd_text:
-        with st.spinner("Processing..."):
-            # Extraction Logic
+        with st.spinner("Deep Scan in Progress..."):
+            # 1. Extraction
             pdf_reader = PyPDF2.PdfReader(resume_file)
-            full_text = " ".join([page.extract_text() for page in pdf_reader.pages])
+            resume_text = " ".join([page.extract_text() for page in pdf_reader.pages])
             
-            # AI Logic
+            # 2. Similarity Score
             vectorizer = TfidfVectorizer(stop_words='english')
-            tfidf_matrix = vectorizer.fit_transform([jd_text, full_text])
+            tfidf_matrix = vectorizer.fit_transform([jd_text, resume_text])
             match_val = round(cosine_similarity(tfidf_matrix)[0][1] * 100, 2)
             
+            # 3. Logic for Features
+            jd_skills = extract_skills(jd_text)
+            resume_skills = extract_skills(resume_text)
+            missing_skills = jd_skills - resume_skills
+            recommendations = get_job_recommendations(resume_text)
+
+            # --- DISPLAY RESULTS ---
             st.markdown(f"""
-                <div style="margin-top: 30px; padding: 20px; border-radius: 20px; background: rgba(96, 165, 250, 0.1); border: 1px solid rgba(96, 165, 250, 0.3); text-align: center;">
-                    <p style="color: #60a5fa; margin: 0;">MATCH SCORE</p>
-                    <h1 style="color: white; font-size: 3.5rem; margin: 0;">{match_val}%</h1>
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h2 style="color: white;">Match Score: <span style="color: #60a5fa;">{match_val}%</span></h2>
                 </div>
             """, unsafe_allow_html=True)
+
+            res_col1, res_col2 = st.columns(2)
+
+            with res_col1:
+                st.markdown("### 🛠 Skill Gap Analysis")
+                if missing_skills:
+                    st.write("Consider adding these skills to your resume:")
+                    for skill in missing_skills:
+                        st.markdown(f"- **{skill}**")
+                else:
+                    st.success("Your skills align perfectly with the JD!")
+
+                st.markdown("### 💡 AI Feedback")
+                if match_val < 50:
+                    st.info("Tip: Your resume lacks many keywords found in the JD. Try tailoring your 'Experience' section to include specific tools mentioned.")
+                else:
+                    st.success("Strong match! Ensure your contact info is updated before applying.")
+
+            with res_col2:
+                st.markdown("### 🚀 Career Roadmap")
+                st.write("Based on your profile, you are a great fit for:")
+                for job in recommendations:
+                    st.markdown(f"""
+                        <div class="feature-box">
+                            <b>{job}</b><br><small>Click to search on LinkedIn</small>
+                        </div>
+                    """, unsafe_allow_html=True)
+
     else:
-        st.warning("Please provide both the Job Description and the Resume PDF.")
+        st.error("Missing Data: Please upload a PDF and paste a Job Description.")
 
 st.markdown('</div>', unsafe_allow_html=True)
 
@@ -143,3 +141,4 @@ st.markdown(f"""
         © 2026 | Built by <b>KANISH</b> | AI & ML  
     </div>
 """, unsafe_allow_html=True)
+            
