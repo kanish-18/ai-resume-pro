@@ -4,21 +4,22 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from google import genai
 
-# --- 1. CONFIGURATION & AI CLIENT ---
+# --- 1. SETTINGS & AI CLIENT ---
 st.set_page_config(page_title="AI RESUME ANALYZER v6.0", layout="wide")
 
 try:
+    # Safely pull the key from Streamlit Secrets
     api_key = st.secrets["GEMINI_API_KEY"]
     client = genai.Client(api_key=api_key)
 except Exception:
-    st.error("🔑 API Key Missing! Go to Settings > Secrets and add: GEMINI_API_KEY = 'your_key_here'")
+    st.error("🔑 API Key Missing! Go to Settings > Secrets and add: GEMINI_API_KEY = 'your_key'")
     st.stop()
 
-# --- 2. CACHED AI FUNCTION ---
+# --- 2. CACHED AI FUNCTION (Saves your Quota) ---
 @st.cache_data(show_spinner=False)
 def get_ai_feedback(jd, resume):
     prompt = f"""
-    Compare the following JD and Resume.
+    Analyze the following JD and Resume as an expert HR Manager.
     1. Summary of match (2 sentences).
     2. List 3 specific missing skills.
     3. Provide 2 tips to improve match score.
@@ -34,7 +35,9 @@ def get_ai_feedback(jd, resume):
         )
         return response.text
     except Exception as e:
-        return f"AI Service Error: {str(e)}"
+        if "429" in str(e):
+            return "⚠️ Quota Full: Please wait 1 minute before trying again."
+        return f"AI Error: {str(e)}"
 
 # --- 3. PREMIUM UI STYLING ---
 st.markdown("""
@@ -65,9 +68,8 @@ st.markdown("""
         background: linear-gradient(90deg, #3b82f6, #8b5cf6) !important;
         color: white !important; border: none !important;
         border-radius: 15px !important; padding: 15px !important;
-        width: 100%; font-weight: bold !important; transition: 0.3s;
+        width: 100%; font-weight: bold !important;
     }
-    .stButton>button:hover { transform: scale(1.02); }
     </style>
     """, unsafe_allow_html=True)
 
@@ -79,7 +81,7 @@ col1, col2 = st.columns(2, gap="large")
 
 with col1:
     st.markdown('<p style="color: #60a5fa; font-weight: bold;">01. JOB DESCRIPTION</p>', unsafe_allow_html=True)
-    jd_input = st.text_area("JD", placeholder="Paste job requirements...", height=250, label_visibility="collapsed")
+    jd_input = st.text_area("JD", placeholder="Paste requirements...", height=250, label_visibility="collapsed")
 
 with col2:
     st.markdown('<p style="color: #a78bfa; font-weight: bold;">02. RESUME UPLOAD (PDF)</p>', unsafe_allow_html=True)
@@ -87,15 +89,15 @@ with col2:
     st.write("<br>"*2, unsafe_allow_html=True)
     analyze_btn = st.button("EXECUTE AI ANALYSIS")
 
-# --- 5. LOGIC & RESULTS ---
+# --- 5. LOGIC ---
 if analyze_btn:
     if resume_file and jd_input:
-        with st.spinner("Processing Data..."):
-            # Text Extraction
+        with st.spinner("Processing..."):
+            # Extract PDF
             pdf_reader = PyPDF2.PdfReader(resume_file)
             resume_text = " ".join([page.extract_text() for page in pdf_reader.pages])
             
-            # TF-IDF Score
+            # NLP Match
             vectorizer = TfidfVectorizer(stop_words='english')
             tfidf_matrix = vectorizer.fit_transform([jd_input, resume_text])
             match_val = round(cosine_similarity(tfidf_matrix)[0][1] * 100, 2)
@@ -103,10 +105,10 @@ if analyze_btn:
             # AI Feedback
             feedback = get_ai_feedback(jd_input, resume_text)
 
-            # Score Display
+            # Display
             st.markdown(f"""
                 <div style="margin-top: 30px; padding: 25px; border-radius: 20px; background: rgba(96, 165, 250, 0.1); border: 1px solid rgba(96, 165, 250, 0.3); text-align: center;">
-                    <p style="color: #60a5fa; margin: 0; letter-spacing: 2px;">MATCH PERCENTAGE</p>
+                    <p style="color: #60a5fa; margin: 0;">MATCH PERCENTAGE</p>
                     <h1 style="color: white; font-size: 4.5rem; margin: 0;">{match_val}%</h1>
                 </div>
             """, unsafe_allow_html=True)
@@ -114,7 +116,7 @@ if analyze_btn:
             st.markdown("### 🛠 AI Insights & Strategy")
             st.markdown(f'<div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px;">{feedback}</div>', unsafe_allow_html=True)
     else:
-        st.warning("Please upload both Resume and Job Description.")
+        st.warning("Please upload both a Resume and a Job Description.")
 
 st.markdown('</div>', unsafe_allow_html=True)
-st.markdown("<p style='text-align:center; color:rgba(255,255,255,0.3); font-size:0.8em; margin-top:30px;'>© 2026 | Developed by KANISH | AI & ML </p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:rgba(255,255,255,0.3); font-size:0.8em; margin-top:30px;'>© 2026 | Built by KANISH | AI & ML </p>", unsafe_allow_html=True)
