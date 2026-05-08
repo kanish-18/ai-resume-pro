@@ -75,7 +75,7 @@ st.markdown("""
 
 # --- 4. MAIN INTERFACE ---
 st.markdown('<div class="premium-card">', unsafe_allow_html=True)
-st.markdown('<p class="shiny-text">SMART CV ANALYZER</p>', unsafe_allow_html=True)
+st.markdown('<p class="shiny-text">RESUME ANALYZER</p>', unsafe_allow_html=True)
 
 col1, col2 = st.columns(2, gap="large")
 
