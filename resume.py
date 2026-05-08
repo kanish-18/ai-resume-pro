@@ -5,8 +5,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from google import genai
 import time
 
-# --- 1. INITIALIZE GENAI SAFELY ---
-# This looks for the key in Streamlit Secrets automatically
+
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
     client = genai.Client(api_key=api_key)
